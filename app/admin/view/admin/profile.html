@@ -1,0 +1,59 @@
+{extend name="base"}
+{block name="main"}
+<div class="card" id="app">
+    <div class="card-header">
+        <h4>个人信息</h4>
+    </div>
+    <div class="card-body">
+        <form @submit.prevent="submit()">
+            <div class="mb-3">
+                <label class="form-label">头像</label>
+                <div class="d-flex align-items-center gap-3">
+                    <img :src="previewAvatar || form.avatar || '/admin/images/default-avatar.png'" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0">
+                    <input type="file" class="form-control" accept="image/*" @change="onAvatarChange" style="max-width:300px">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-control" v-model="form.username" disabled>
+                <small class="form-text text-muted">用户名不可修改</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">昵称 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" required v-model="form.nickname">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">邮箱</label>
+                <input type="email" class="form-control" v-model="form.email">
+            </div>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+            <a href="{:url("admin/index")}" class="btn btn-default">返回</a>
+        </form>
+    </div>
+</div>
+{/block}
+{block name="script"}
+<script>
+createVueApp({
+    data() {
+        return {
+            previewAvatar: '',
+            form: {
+                username: '{$admin.username}',
+                nickname: '{$admin.nickname}',
+                email:    '{$admin.email|default=""}',
+                avatar:   '{$admin.avatar|default=""}',
+            }
+        };
+    },
+    methods: {
+        onAvatarChange(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.form.avatar = file;
+            this.previewAvatar = URL.createObjectURL(file);
+        },
+    }
+}).mount('#app');
+</script>
+{/block}

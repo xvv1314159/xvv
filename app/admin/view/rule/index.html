@@ -1,0 +1,54 @@
+{extend name="base"}
+{block name="main"}
+
+<div class="row">
+
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-btns mb-2-5 d-flex justify-content-between">
+          <div>
+            <a class="btn btn-sm btn-primary me-1" href="add{$pluginId ? '?plugin='.$pluginId.($iframe ? '&iframe=1' : '') : ($iframe ? '?iframe=1' : '')}"><i class="mdi mdi-plus"></i> 新增</a>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>编号</th>
+                <th>标题</th>
+                <th>href</th>
+                <th>排序</th>
+                <th>菜单</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+                {foreach $menus as $v}
+              <tr>
+                <td>{$v.id}</td>
+                <td>{$v.title}</td>
+                <td>{$v.href}</td>
+                <td>{$v.sort}</td>
+                <td>{$v.is_menu?'显示':'隐藏'}</td>
+                <td>{$v.status?'<font class="text-success">启用</font>':'<font class="text-danger">停用</font>'}</td>
+                <td>
+                  <a href="add?pid={$v.id}{$pluginId ? '&plugin='.$pluginId : ''}{$iframe ? '&iframe=1' : ''}">添加子菜单</a>
+                  <span class="text-muted mx-1">|</span>
+                  <a href="edit?id={$v.id}{$iframe ? '&iframe=1' : ''}">修改</a>
+                  <span class="text-muted mx-1">|</span>
+                  <a href="javascript:void(0)" class="text-danger" onclick="del({$v.id})">删除</a>
+                </td>
+              </tr>
+                {/foreach}
+            </tbody>
+          </table>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+</div>
+{/block}

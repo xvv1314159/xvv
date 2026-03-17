@@ -1,0 +1,373 @@
+{extend name="base"}
+{block name="main"}
+
+<!-- 业务统计卡片 -->
+<div class="row mb-3">
+  <div class="col-md-3 col-sm-6 mb-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:54px;height:54px;flex-shrink:0">
+          <i class="mdi mdi-account-tie text-primary fs-3"></i>
+        </div>
+        <div>
+          <div class="text-muted" style="font-size:13px">管理员</div>
+          <div class="fw-bold fs-4">{$statsData.admin_count}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6 mb-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:54px;height:54px;flex-shrink:0">
+          <i class="mdi mdi-puzzle text-success fs-3"></i>
+        </div>
+        <div>
+          <div class="text-muted" style="font-size:13px">已安装插件</div>
+          <div class="fw-bold fs-4">{$statsData.plugin_installed} <small class="text-muted fs-6">/ {$statsData.plugin_count}</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6 mb-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:54px;height:54px;flex-shrink:0">
+          <i class="mdi mdi-folder-multiple text-info fs-3"></i>
+        </div>
+        <div>
+          <div class="text-muted" style="font-size:13px">上传文件</div>
+          <div class="fw-bold fs-4">{$statsData.file_count}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6 mb-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width:54px;height:54px;flex-shrink:0">
+          <i class="mdi mdi-account-group text-warning fs-3"></i>
+        </div>
+        <div>
+          <div class="text-muted" style="font-size:13px">注册用户</div>
+          <div class="fw-bold fs-4">{$statsData.member_count}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 最近登录日志 -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="mdi mdi-history me-1"></i>最近登录记录</h5>
+        <a href="{:url("Log/login_log")}" class="btn btn-sm btn-outline-secondary">查看全部</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>用户名</th>
+                <th>IP</th>
+                <th>状态</th>
+                <th>备注</th>
+                <th>时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {volist name="loginLogs" id="log"}
+              <tr>
+                <td><i class="mdi mdi-account me-1 text-muted"></i>{$log.username}</td>
+                <td><span class="text-muted">{$log.ip}</span></td>
+                <td>{if $log.status == 1}<span class="badge bg-success">成功</span>{else}<span class="badge bg-danger">失败</span>{/if}</td>
+                <td><small class="text-muted">{$log.remark}</small></td>
+                <td><small class="text-muted">{:date('m-d H:i:s',$log.create_time)}</small></td>
+              </tr>
+              {/volist}
+              {if empty($loginLogs)}
+              <tr><td colspan="5" class="text-center text-muted py-3">暂无记录</td></tr>
+              {/if}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="row mb-3" id="system-monitor">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="mdi mdi-monitor-dashboard"></i> 系统监控</h5>
+        <small class="text-muted">更新时间: <span id="update-time">{{ updateTime }}</span></small>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- 内存使用 -->
+          <div class="col-md-3 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar-md rounded-circle bg-primary bg-opacity-10 me-3 d-flex align-items-center justify-content-center">
+                <i class="mdi mdi-memory text-primary fs-4"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">内存使用</h6>
+                <p class="mb-0 text-muted">{{ systemData.memory.system_used_format }} / {{ systemData.memory.system_total_format }}</p>
+                <small class="text-muted">{{ systemData.memory.system_usage_percent }}%</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 磁盘使用 -->
+          <div class="col-md-3 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar-md rounded-circle bg-success bg-opacity-10 me-3 d-flex align-items-center justify-content-center">
+                <i class="mdi mdi-harddisk text-success fs-4"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">磁盘使用</h6>
+                <p class="mb-0 text-muted">{{ systemData.disk.used_format }} / {{ systemData.disk.total_format }}</p>
+                <small class="text-muted">{{ systemData.disk.usage_percent }}%</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- CPU 负载 -->
+          <div class="col-md-3 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar-md rounded-circle bg-info bg-opacity-10 me-3 d-flex align-items-center justify-content-center">
+                <i class="mdi mdi-chip text-info fs-4"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">CPU 负载</h6>
+                <p class="mb-0 text-muted">1分钟: {{ systemData.cpu.load_1min }}</p>
+                <small class="text-muted">5分钟: {{ systemData.cpu.load_5min }}</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 数据库信息 -->
+          <div class="col-md-3 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar-md rounded-circle bg-warning bg-opacity-10 me-3 d-flex align-items-center justify-content-center">
+                <i class="mdi mdi-database text-warning fs-4"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">数据库</h6>
+                <p class="mb-0 text-muted">{{ systemData.database.tables_count }} 张表 / {{ systemData.database.size_format }}</p>
+                <small class="text-muted">MySQL {{ systemData.database.version }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 系统信息卡片 -->
+<div class="row mb-3">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="mdi mdi-information"></i> 系统信息</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- PHP 信息 -->
+          <div class="col-md-6 mb-3">
+            <h6 class="border-bottom pb-2"><i class="mdi mdi-language-php"></i> PHP 信息</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <td width="40%" class="text-muted">PHP 版本</td>
+                <td><strong>{:PHP_VERSION}</strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">运行方式</td>
+                <td>{:php_sapi_name()}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">最大执行时间</td>
+                <td>{:ini_get('max_execution_time')} 秒</td>
+              </tr>
+              <tr>
+                <td class="text-muted">内存限制</td>
+                <td>{:ini_get('memory_limit')}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">上传限制</td>
+                <td>{:ini_get('upload_max_filesize')}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">POST 限制</td>
+                <td>{:ini_get('post_max_size')}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <!-- 服务器信息 -->
+          <div class="col-md-6 mb-3">
+            <h6 class="border-bottom pb-2"><i class="mdi mdi-server"></i> 服务器信息</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <td width="40%" class="text-muted">操作系统</td>
+                <td>{php}
+                // 尝试获取 Linux 发行版信息
+                if (file_exists('/etc/os-release')) {
+                  $os_info = parse_ini_file('/etc/os-release');
+                  echo isset($os_info['PRETTY_NAME']) ? $os_info['PRETTY_NAME'] : php_uname('s') . ' ' . php_uname('r');
+                } else {
+                  echo php_uname('s') . ' ' . php_uname('r');
+                }
+                {/php}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">服务器软件</td>
+                <td>{php}echo isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Webman/Workerman';{/php}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">服务器IP</td>
+                <td>{php}
+                // 尝试多种方式获取 IP
+                if (isset($_SERVER['SERVER_ADDR']) && $_SERVER['SERVER_ADDR']) {
+                  echo $_SERVER['SERVER_ADDR'];
+                } elseif (isset($_SERVER['LOCAL_ADDR']) && $_SERVER['LOCAL_ADDR']) {
+                  echo $_SERVER['LOCAL_ADDR'];
+                } else {
+                  // 通过命令获取
+                  $ip = shell_exec("hostname -I | awk '{print $1}'");
+                  if ($ip) {
+                    echo trim($ip);
+                  } else {
+                    $ip = gethostbyname(gethostname());
+                    echo $ip != gethostname() ? $ip : '127.0.0.1';
+                  }
+                }
+                {/php}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">监听端口</td>
+                <td>{php}
+                // 从 process.php 配置文件获取端口
+                $config_file = base_path() . '/config/process.php';
+                if (file_exists($config_file)) {
+                  $config = include $config_file;
+                  if (isset($config['webman']['listen'])) {
+                    $port = parse_url($config['webman']['listen'], PHP_URL_PORT);
+                    echo $port ? $port : '8787';
+                  } else {
+                    echo '8787';
+                  }
+                } else {
+                  echo isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : '8787';
+                }
+                {/php}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">项目根目录</td>
+                <td><small>{:base_path()}</small></td>
+              </tr>
+              <tr>
+                <td class="text-muted">当前时间</td>
+                <td>{:date('Y-m-d H:i:s')}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <!-- 框架信息 -->
+          <div class="col-md-6 mb-3">
+            <h6 class="border-bottom pb-2"><i class="mdi mdi-application"></i> 框架信息</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <td width="40%" class="text-muted">Webman 版本</td>
+                <td><strong>{php}echo defined('WEBMAN_VERSION') ? WEBMAN_VERSION : (class_exists('Webman\App') ? '已安装' : '未知');{/php}</strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">ThinkORM 版本</td>
+                <td>{php}echo class_exists('think\facade\Db') ? '已安装' : '未安装';{/php}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">项目路径</td>
+                <td><small>{:base_path()}</small></td>
+              </tr>
+              <tr>
+                <td class="text-muted">运行时路径</td>
+                <td><small>{:runtime_path()}</small></td>
+              </tr>
+            </table>
+          </div>
+          
+          <!-- PHP 扩展 -->
+          <div class="col-md-6 mb-3">
+            <h6 class="border-bottom pb-2"><i class="mdi mdi-puzzle"></i> PHP 扩展</h6>
+            <div style="max-height: 200px; overflow-y: auto;">
+              <div class="d-flex flex-wrap gap-1">
+                {php}
+                $extensions = get_loaded_extensions();
+                foreach ($extensions as $ext) {
+                  echo '<span class="badge bg-secondary">' . $ext . '</span> ';
+                }
+                {/php}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/block}
+{block name="script"}
+<script>
+// 系统监控自动刷新
+createVueApp({
+  data() {
+    return {
+      systemData: {$systemData|json_encode|raw},
+      updateTime: '{:date("H:i:s")}',
+      timer: null
+    };
+  },
+  mounted() {
+    this.startAutoRefresh();
+  },
+  beforeUnmount() {
+    this.stopAutoRefresh();
+  },
+  methods: {
+    async loadSystemData() {
+      try {
+        const res = await fetch({:url("index/get_system_data")}).then(r => r.json());
+        
+        if (res.code === 0) {
+          this.systemData = res.data;
+          this.updateTime = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        }
+      } catch (e) {
+        console.error('获取系统数据失败:', e);
+      }
+    },
+    
+    startAutoRefresh() {
+      // 每5秒刷新一次
+      this.timer = setInterval(() => {
+        this.loadSystemData();
+      }, 5000);
+    },
+    
+    stopAutoRefresh() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    }
+  }
+}).mount('#system-monitor');
+</script>
+
+{/block}

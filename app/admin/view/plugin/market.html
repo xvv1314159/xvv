@@ -1,0 +1,184 @@
+{extend name="base"}
+{block name="head"}
+<style>
+.market-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px; }
+.market-card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.07); border:1px solid #c8d0e0; display:flex; flex-direction:column; transition:box-shadow .2s,transform .2s; overflow:visible; }
+.market-card:hover { box-shadow:0 6px 24px rgba(0,0,0,.13); transform:translateY(-2px); }
+.market-card-header { display:flex; align-items:center; gap:14px; padding:18px 20px 14px; border-bottom:1px solid #c8d0e0; }
+.market-icon { width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; flex-shrink:0; }
+.market-meta { flex:1; min-width:0; }
+.market-name { font-size:15px; font-weight:700; color:#2d3748; margin:0 0 3px; }
+.market-version { font-size:12px; color:#a0aec0; }
+.market-card-body { padding:14px 20px; flex:1; }
+.market-desc { font-size:13px; color:#718096; line-height:1.6; margin:0 0 10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.market-card-footer { padding:12px 20px; background:#fafafa; border-top:1px solid #c8d0e0; display:flex; gap:8px; align-items:center; justify-content:space-between; border-radius:0 0 12px 12px; }
+.badge-installed { background:#e6f9f0; color:#22863a; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-upgradable { background:#fff3cd; color:#856404; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-category { background:#e8f4fd; color:#1a73e8; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.require-tag { background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px; font-size:11px; }
+.skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:skeleton-loading 1.5s infinite; border-radius:8px; }
+@keyframes skeleton-loading { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+{/block}
+
+{block name="main"}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="mdi mdi-store me-1"></i> 插件市场</h5>
+        <div class="d-flex gap-2 align-items-center">
+          <input type="text" class="form-control form-control-sm" style="width:200px" placeholder="搜索插件..." v-model="keyword">
+          <select class="form-select form-select-sm" style="width:120px" v-model="filterCategory">
+            <option value="">全部分类</option>
+            <option v-for="cat in categories" :value="cat">{{ cat }}</option>
+          </select>
+          <button class="btn btn-primary btn-sm" @click="loadMarket" :disabled="loading">
+            <i class="mdi" :class="loading ? 'mdi-loading mdi-spin' : 'mdi-refresh'"></i>
+            {{ loading ? '加载中...' : '刷新' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="app">
+
+          <!-- 错误提示 -->
+          <div v-if="error" class="alert alert-danger">
+            <i class="mdi mdi-alert-circle me-1"></i>{{ error }}
+          </div>
+
+          <!-- 骨架屏 -->
+          <div v-if="loading" class="market-grid">
+            <div v-for="i in 6" :key="i" class="market-card">
+              <div class="market-card-header">
+                <div class="skeleton" style="width:48px;height:48px;border-radius:10px"></div>
+                <div style="flex:1">
+                  <div class="skeleton mb-2" style="height:16px;width:60%"></div>
+                  <div class="skeleton" style="height:12px;width:40%"></div>
+                </div>
+              </div>
+              <div class="market-card-body">
+                <div class="skeleton mb-2" style="height:13px;width:100%"></div>
+                <div class="skeleton" style="height:13px;width:80%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 插件列表 -->
+          <div v-if="!loading && filteredList.length" class="market-grid">
+            <div v-for="p in filteredList" :key="p.identifier" class="market-card">
+              <div class="market-card-header">
+                <div class="market-icon"><i :class="p.icon || 'mdi mdi-puzzle'"></i></div>
+                <div class="market-meta">
+                  <div class="market-name">{{ p.name }}</div>
+                  <div class="market-version">
+                    v{{ p.version }}
+                    <span v-if="p.installed" class="badge-installed ms-1">已安装 v{{ p.installed_version }}</span>
+                    <span v-if="p.upgradable" class="badge-upgradable ms-1">可升级</span>
+                  </div>
+                </div>
+                <span class="badge-category">{{ p.category }}</span>
+              </div>
+              <div class="market-card-body">
+                <p class="market-desc">{{ p.description }}</p>
+                <div v-if="p.require && p.require.length" class="d-flex gap-1 flex-wrap">
+                  <span class="text-muted" style="font-size:12px">依赖：</span>
+                  <span v-for="r in p.require" :key="r" class="require-tag">{{ r }}</span>
+                </div>
+              </div>
+              <div class="market-card-footer">
+                <span class="text-muted" style="font-size:12px">作者：{{ p.author }}</span>
+                <div>
+                  <button v-if="!p.installed" class="btn btn-sm btn-success" @click="installPlugin(p)" :disabled="installing === p.identifier">
+                    <i class="mdi" :class="installing === p.identifier ? 'mdi-loading mdi-spin' : 'mdi-download'"></i>
+                    {{ installing === p.identifier ? '下载中...' : '下载安装' }}
+                  </button>
+                  <button v-else-if="p.upgradable" class="btn btn-sm btn-warning" @click="installPlugin(p)" :disabled="installing === p.identifier">
+                    <i class="mdi" :class="installing === p.identifier ? 'mdi-loading mdi-spin' : 'mdi-arrow-up-circle'"></i>
+                    {{ installing === p.identifier ? '下载中...' : '下载更新' }}
+                  </button>
+                  <span v-else class="text-muted" style="font-size:12px"><i class="mdi mdi-check-circle text-success"></i> 已是最新</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div v-if="!loading && !filteredList.length && !error" class="text-center py-5 text-muted">
+            <i class="mdi mdi-store-off" style="font-size:48px"></i>
+            <p>暂无插件</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{/block}
+
+{block name="script"}
+<script>
+const _app = createVueApp({
+    data() {
+        return {
+            loading:         true,
+            error:           '',
+            list:            [],
+            keyword:         '',
+            filterCategory:  '',
+            installing:      '',
+        };
+    },
+    computed: {
+        categories() {
+            return [...new Set(this.list.map(p => p.category).filter(Boolean))];
+        },
+        filteredList() {
+            return this.list.filter(p => {
+                const kw = this.keyword.trim().toLowerCase();
+                const matchKw = !kw || p.name.toLowerCase().includes(kw) || p.description.toLowerCase().includes(kw);
+                const matchCat = !this.filterCategory || p.category === this.filterCategory;
+                return matchKw && matchCat;
+            });
+        },
+    },
+    mounted() {
+        this.loadMarket();
+    },
+    methods: {
+        loadMarket() {
+            this.loading = true;
+            this.error   = '';
+            this.post('{:url("Plugin/market_list")}', {}, res => {
+                this.loading = false;
+                if (res.code === 0) {
+                    this.list = res.data;
+                } else {
+                    this.error = res.msg || '加载失败';
+                }
+            });
+        },
+        installPlugin(p) {
+            const action = p.installed ? '下载更新' : '下载安装';
+            this.confirm(`确定要${action}插件「${p.name}」吗？`, () => {
+                this.installing = p.identifier;
+                this.post({:url("plugin/market_install")}, {
+                    identifier:           p.identifier,
+                    download_url:         p.download_url,
+                    download_url_github:  p.download_url_github,
+                }, res => {
+                    this.installing = '';
+                    this.alert(res, () => {
+                        if (res.code == 1) {
+                            // 跳转到插件列表安装
+                            window.location.href = '{:url("Plugin/index")}';
+                        }
+                    });
+                });
+            });
+        },
+    }
+});
+_app.mount('#app');
+</script>
+{/block}
